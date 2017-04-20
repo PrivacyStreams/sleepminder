@@ -48,7 +48,7 @@ public class AudioRecorder extends Thread {
         int i = 0;
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
 
-        uqi.getData(Audio.recordPeriodic(1000, 0), Purpose.HEALTH("monitoring sleep"))
+        uqi.getData(Audio.recordPeriodic(500, 0), Purpose.HEALTH("monitoring sleep"))
                 .setField("amplitudeSamples", AudioOperators.getAmplitudeSamples(Audio.AUDIO_DATA))
                 .forEach("amplitudeSamples", new Callback<List<Integer>>() {
                     @Override
