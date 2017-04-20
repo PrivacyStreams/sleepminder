@@ -44,7 +44,7 @@ public class AudioView extends View implements DebugView {
         init();
     }
 
-    private void init(){
+    private void init() {
         paint = new Paint();
         paint.setColor(Color.BLACK);
         paint.setStrokeWidth(1);
@@ -60,7 +60,7 @@ public class AudioView extends View implements DebugView {
 
         noiseModel = new NoiseModel();
 
-        recorder = new AudioRecorder(noiseModel,this);
+        recorder = new AudioRecorder(this.getContext(), noiseModel, this);
         recorder.start();
     }
 

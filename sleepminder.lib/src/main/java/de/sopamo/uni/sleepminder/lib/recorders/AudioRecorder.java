@@ -1,13 +1,18 @@
 package de.sopamo.uni.sleepminder.lib.recorders;
 
+import android.content.Context;
 import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
-import android.media.AudioTrack;
 import android.media.MediaRecorder;
-import android.util.Log;
 
-import java.io.IOException;
+import com.github.privacystreams.audio.Audio;
+import com.github.privacystreams.audio.AudioOperators;
+import com.github.privacystreams.core.Callback;
+import com.github.privacystreams.core.UQI;
+import com.github.privacystreams.core.purposes.Purpose;
+
+import java.util.Arrays;
+import java.util.List;
 
 import de.sopamo.uni.sleepminder.lib.DebugView;
 import de.sopamo.uni.sleepminder.lib.detection.FeatureExtractor;
@@ -21,10 +26,11 @@ public class AudioRecorder extends Thread {
     private DebugView debugView;
     private short[] buffer;
     private FeatureExtractor featureExtractor;
+    private Context context;
 
 
-    public AudioRecorder(NoiseModel noiseModel, DebugView debugView) {
-
+    public AudioRecorder(Context context, NoiseModel noiseModel, DebugView debugView) {
+        this.context = context;
         this.noiseModel = noiseModel;
         this.debugView = debugView;
         this.featureExtractor = new FeatureExtractor(noiseModel);
@@ -38,32 +44,49 @@ public class AudioRecorder extends Thread {
     }
 
     private void capture() {
+        UQI uqi = new UQI(this.context);
         int i = 0;
         android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
-        if(buffer == null) {
-            buffer  = new short[1600];
-        }
 
-        if(N == 0 || (recorder == null || recorder.getState() != AudioRecord.STATE_INITIALIZED)) {
-            N = AudioRecord.getMinBufferSize(16000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
-            if(N < 1600) {
-                N = 1600;
-            }
-            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                    16000,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT,
-                    N);
-        }
-        recorder.startRecording();
-
+        uqi.getData(Audio.recordPeriodic(1000, 0), Purpose.HEALTH("monitoring sleep"))
+                .setField("amplitudeSamples", AudioOperators.getAmplitudeSamples(Audio.AUDIO_DATA))
+                .forEach("amplitudeSamples", new Callback<List<Integer>>() {
+                    @Override
+                    protected void onInput(List<Integer> amplitudeSamples) {
+                        short[] amplitudes = new short[amplitudeSamples.size()];
+                        for (int i = 0; i < amplitudeSamples.size(); i++) {
+                            amplitudes[i] = amplitudeSamples.get(i).shortValue();
+                        }
+                        process(amplitudes);
+                    }
+                });
+//        if(buffer == null) {
+//            buffer  = new short[1600];
+//        }
+//
+//        if(N == 0 || (recorder == null || recorder.getState() != AudioRecord.STATE_INITIALIZED)) {
+//            N = AudioRecord.getMinBufferSize(16000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+//            if(N < 1600) {
+//                N = 1600;
+//            }
+//            recorder = new AudioRecord(MediaRecorder.AudioSource.MIC,
+//                    16000,
+//                    AudioFormat.CHANNEL_IN_MONO,
+//                    AudioFormat.ENCODING_PCM_16BIT,
+//                    N);
+//        }
+//        recorder.startRecording();
+//
         while(!this.stopped) {
-            N = recorder.read(buffer, 0, buffer.length);
-
-            process(buffer);
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-        recorder.stop();
-        recorder.release();
+        uqi.stopAll();
+//        recorder.stop();
+//        recorder.release();
 
     }
 
