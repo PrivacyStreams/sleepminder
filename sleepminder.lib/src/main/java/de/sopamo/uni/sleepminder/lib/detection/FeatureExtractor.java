@@ -28,19 +28,19 @@ public class FeatureExtractor {
 
 
     private double calculateRMS(short[] buffer) {
-        long sum = 0;
+        double sum = 0;
         for(int i=0;i<buffer.length;i++) {
-            sum += Math.pow(buffer[i],2);
+            sum += buffer[i] * buffer[i] / buffer.length;
         }
-        return Math.sqrt(sum / buffer.length);
+        return Math.sqrt(sum);
     }
 
     private double calculateRMS(float[] buffer) {
-        long sum = 0;
+        double sum = 0;
         for(int i=0;i<buffer.length;i++) {
-            sum += Math.pow(buffer[i],2);
+            sum += buffer[i] * buffer[i] / buffer.length;
         }
-        return Math.sqrt(sum / buffer.length);
+        return Math.sqrt(sum);
     }
 
     private double calculateLowFreqRMS(short[] buffer) {
@@ -86,9 +86,9 @@ public class FeatureExtractor {
         double mean = calculateMean(buffer);
         double var = 0;
         for(short s: buffer) {
-            var += Math.pow(s - mean,2);
+            var += ((double) s - mean) * ((double) s - mean) / buffer.length;
         }
-        return var / buffer.length;
+        return var;
     }
 
     /**

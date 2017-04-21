@@ -95,20 +95,20 @@ public class NoiseModel {
     }
 
     private double mean(List<Double> list) {
-        double sum = 0;
+        double mean = 0;
         for (int i = 0; i < list.size(); i++) {
-            sum += list.get(i);
+            mean += list.get(i) / list.size();
         }
-        return sum / list.size();
+        return mean;
     }
 
     private double std(List<Double> list) {
         double mean = mean(list);
         double var = 0;
         for(int i = 0; i < list.size(); i++) {
-            var += Math.pow(list.get(i) - mean,2);
+            var += (list.get(i) - mean) * (list.get(i) - mean) / list.size();
         }
-        return Math.sqrt(var / list.size());
+        return Math.sqrt(var);
     }
 
     public int getEvent() {
